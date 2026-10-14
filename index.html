@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>เช็คโปร LCFC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF0F4; --surface:#FFFFFF; --surface-2:#F6F8FA;
+  --ink:#18202E; --muted:#5A6476; --line:#DCE1E8;
+  --p40:#D2490C; --p40-soft:#FDEEE6; --p40-ink:#9A3507;
+  --p30:#1B5BD0; --p30-soft:#E7EFFC; --p30-ink:#123F94;
+  --ok:#11845B; --ok-soft:#E3F4EC; --warn:#A86200; --warn-soft:#FDF2DE; --bad:#B42318; --bad-soft:#FDECEA;
+  --focus:#1B5BD0;
+  --r-lg:20px; --r-md:12px; --r-sm:8px;
+  --font:"IBM Plex Sans Thai","Noto Sans Thai","Sukhumvit Set","Leelawadee UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10141B; --surface:#181E28; --surface-2:#1F2633;
+    --ink:#E8ECF2; --muted:#9AA4B5; --line:#2A3342;
+    --p40:#F06A2C; --p40-soft:#3A2015; --p40-ink:#FFB48F;
+    --p30:#4C86F0; --p30-soft:#172A4D; --p30-ink:#A9C6FF;
+    --ok:#3CC08A; --ok-soft:#123426; --warn:#F0B04A; --warn-soft:#3A2B10; --bad:#F2766B; --bad-soft:#3D1715;
+    --focus:#7FA8FF; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10141B; --surface:#181E28; --surface-2:#1F2633;
+  --ink:#E8ECF2; --muted:#9AA4B5; --line:#2A3342;
+  --p40:#F06A2C; --p40-soft:#3A2015; --p40-ink:#FFB48F;
+  --p30:#4C86F0; --p30-soft:#172A4D; --p30-ink:#A9C6FF;
+  --ok:#3CC08A; --ok-soft:#123426; --warn:#F0B04A; --warn-soft:#3A2B10; --bad:#F2766B; --bad-soft:#3D1715;
+  --focus:#7FA8FF; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.wrap{max-width:880px;margin:0 auto;padding:20px 16px 48px}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font-size:22px;font-weight:700;margin:0;letter-spacing:-.01em}
+.brand span{color:var(--muted);font-size:14px}
+.status{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;font-size:14px;font-weight:500;background:var(--surface);border:1px solid var(--line)}
+.status i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.status.active i{background:var(--ok)} .status.upcoming i{background:var(--warn)} .status.ended i{background:var(--bad)}
+
+/* search */
+.search{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:6px 6px 6px 18px;display:flex;align-items:center;gap:12px;transition:border-color .15s, box-shadow .15s}
+.search:focus-within{border-color:var(--p30);box-shadow:0 0 0 4px color-mix(in srgb,var(--p30) 18%,transparent)}
+.search svg{flex:none;color:var(--muted)}
+.search input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;font-size:22px;font-weight:500;padding:14px 0;outline:none;letter-spacing:.02em}
+.search input::placeholder{color:var(--muted);font-weight:400;font-size:18px;letter-spacing:0}
+.clear{border:0;background:var(--surface-2);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;color:var(--muted);font-size:14px}
+.clear[hidden]{display:none}
+.hint{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:10px 4px 0}
+.ready{display:inline-flex;align-items:center;gap:6px}
+.ready i{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.ready.on i{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+
+.recent{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0;align-items:center}
+.recent[hidden]{display:none}
+.recent small{color:var(--muted);font-size:13px;margin-right:2px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:14px;cursor:pointer}
+.chip:hover{border-color:var(--muted)}
+
+#out{margin-top:22px;min-height:40px}
+
+/* result card */
+.result{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);display:grid;grid-template-columns:200px 1fr;overflow:hidden}
+.pop{animation:pop .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes pop{from{opacity:0;transform:translateY(6px) scale(.99)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.pop{animation:none}}
+
+.tag{position:relative;color:#fff;padding:34px 22px 24px;display:flex;flex-direction:column;justify-content:center;gap:2px;background:var(--p30)}
+.p40 .tag{background:var(--p40)}
+.tag::before{content:"";position:absolute;top:16px;left:22px;width:14px;height:14px;border-radius:50%;background:var(--surface);box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
+.tag .disc{font-size:76px;line-height:.95;font-weight:700;letter-spacing:-.04em}
+.tag .disc sup{font-size:34px;letter-spacing:0;vertical-align:top;position:relative;top:8px;margin-left:2px}
+.tag .lbl{font-size:16px;font-weight:600;opacity:.95}
+.tag .min{margin-top:14px;font-size:14px;padding:6px 10px;border-radius:var(--r-sm);background:rgba(255,255,255,.18);align-self:flex-start;font-weight:500}
+
+.info{padding:22px 24px 20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.code{font-weight:700;font-size:15px;padding:3px 10px;border-radius:var(--r-sm);background:var(--surface-2);border:1px solid var(--line)}
+.grp{font-size:14px;font-weight:600;padding:3px 10px;border-radius:var(--r-sm);background:var(--p30-soft);color:var(--p30-ink)}
+.p40 .grp{background:var(--p40-soft);color:var(--p40-ink)}
+.info h2{margin:0;font-size:21px;line-height:1.35;font-weight:600;overflow-wrap:anywhere}
+.size{display:inline-block;font-size:14px;color:var(--muted);margin-left:6px;font-weight:500}
+.prices{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.price{background:var(--surface-2);border-radius:var(--r-md);padding:10px 14px}
+.price small{display:block;color:var(--muted);font-size:13px}
+.price b{font-size:24px;font-weight:700;letter-spacing:-.01em}
+.price.now b{color:var(--p30-ink)} .p40 .price.now b{color:var(--p40-ink)}
+.price s{color:var(--muted);font-size:20px;text-decoration-thickness:1.5px}
+.cond{margin:0;font-size:15px}
+.cond em{font-style:normal;color:var(--muted);display:block;font-size:14px;margin-top:2px}
+.pcode{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1.5px dashed var(--line);border-radius:var(--r-md);padding:10px 12px 10px 14px}
+.pcode span{color:var(--muted);font-size:14px}
+.pcode b{font-size:20px;letter-spacing:.06em;font-weight:700}
+.copy{margin-left:auto;border:0;border-radius:var(--r-sm);padding:8px 14px;background:var(--ink);color:var(--surface);cursor:pointer;font-size:14px;font-weight:500}
+.ex{font-size:14px;color:var(--muted);margin:0}
+.ex b{color:var(--ink);font-weight:600}
+.alert{font-size:14px;padding:10px 12px;border-radius:var(--r-md);background:var(--warn-soft);color:var(--warn);font-weight:500}
+.alert.bad{background:var(--bad-soft);color:var(--bad)}
+.alert.note{background:var(--surface-2);color:var(--muted);font-weight:400}
+
+/* not found */
+.empty{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;display:flex;gap:16px;align-items:flex-start}
+.empty .ico{flex:none;width:44px;height:44px;border-radius:12px;background:var(--surface-2);display:grid;place-items:center;color:var(--muted)}
+.empty h2{margin:0 0 4px;font-size:19px}
+.empty p{margin:0;color:var(--muted);font-size:15px}
+
+/* no promo card */
+.nopromo{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);display:grid;grid-template-columns:200px 1fr;overflow:hidden}
+.nopromo .xpanel{background:var(--bad-soft);color:var(--bad);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:28px 20px}
+.nopromo .xpanel svg{width:92px;height:92px}
+.nopromo .xpanel .x{stroke-dasharray:40;stroke-dashoffset:0;animation:draw .35s .12s ease-out both}
+.nopromo .xpanel .x2{animation-delay:.24s}
+@keyframes draw{from{stroke-dashoffset:40}to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.nopromo .xpanel .x{animation:none}}
+.nopromo .xpanel b{font-size:18px;font-weight:700}
+.nopromo .info h2{font-size:24px}
+.nopromo .info p{margin:0;color:var(--muted);font-size:15px}
+.normal{display:flex;align-items:center;gap:12px;background:var(--surface-2);border-radius:var(--r-md);padding:12px 14px}
+.normal svg{flex:none;color:var(--muted)}
+.normal span{font-size:15px}
+.normal small{display:block;color:var(--muted);font-size:13px}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--r-sm);padding:8px 14px;cursor:pointer;font-size:14px;font-weight:500}
+.btn:hover{border-color:var(--muted)}
+.btn.dark{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+@media (max-width:640px){
+  .nopromo{grid-template-columns:1fr}
+  .nopromo .xpanel{flex-direction:row;justify-content:flex-start;padding:18px 20px;gap:14px}
+  .nopromo .xpanel svg{width:56px;height:56px}
+  .nopromo .info h2{font-size:21px}
+}
+
+/* list */
+.list{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.list header{padding:12px 18px;font-size:14px;color:var(--muted);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+.row{display:grid;grid-template-columns:90px 1fr auto 64px;gap:12px;align-items:center;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:transparent;padding:11px 18px;cursor:pointer}
+.row:last-child{border-bottom:0}
+.row:hover{background:var(--surface-2)}
+.row .c{font-weight:600}
+.row .d{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.row .r{color:var(--muted);font-size:15px;text-align:right}
+.badge{font-size:13px;font-weight:700;padding:2px 0;border-radius:6px;text-align:center;background:var(--p30-soft);color:var(--p30-ink)}
+.badge.b40{background:var(--p40-soft);color:var(--p40-ink)}
+mark{background:color-mix(in srgb,var(--warn) 25%,transparent);color:inherit;border-radius:3px}
+
+/* overview */
+.overview{margin-top:36px}
+.overview h3{font-size:16px;margin:0 0 4px;font-weight:600}
+.overview > p{margin:0 0 12px;color:var(--muted);font-size:14px}
+.groups{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.g{border:1px solid var(--line);background:var(--surface);border-radius:var(--r-md);padding:14px 16px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:2px;border-left:5px solid var(--p30)}
+.g.p40{border-left-color:var(--p40)}
+.g[aria-pressed="true"]{background:var(--surface-2);border-color:var(--muted);border-left-color:inherit}
+.g.p40[aria-pressed="true"]{border-left-color:var(--p40)} .g.p30[aria-pressed="true"]{border-left-color:var(--p30)}
+.g b{font-size:16px}
+.g span{font-size:14px;color:var(--muted)}
+#groupList{margin-top:12px}
+.foot{margin-top:28px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.foot button{border:1px solid var(--line);background:transparent;border-radius:var(--r-sm);padding:4px 10px;cursor:pointer;font-size:13px;color:var(--muted)}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:var(--r-md);font-size:14px;opacity:0;pointer-events:none;transition:.2s}
+.toast.show{opacity:1;transform:translateX(-50%)}
+
+@media (max-width:640px){
+  .wrap{padding:16px 16px 40px}
+  .result{grid-template-columns:1fr}
+  .tag{flex-direction:row;align-items:flex-end;flex-wrap:wrap;gap:4px 12px;padding:30px 20px 18px}
+  .tag::before{top:12px;left:auto;right:18px}
+  .tag .disc{font-size:60px}
+  .tag .min{margin:0 0 6px auto}
+  .tag .lbl{margin-bottom:8px}
+  .info{padding:18px 18px 16px}
+  .search input{font-size:20px}
+  .groups{grid-template-columns:1fr}
+  .row{grid-template-columns:76px 1fr 56px;padding:11px 14px}
+  .row .r{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><h1>เช็คโปร LCFC</h1><span>Leicester City (LTC)</span></div>
+    <div class="status" id="status"><i></i><span></span></div>
+  </div>
+
+  <label class="search" for="q">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M10 8v8M13 8v8M16.5 8v8"/></svg>
+    <input id="q" type="text" inputmode="numeric" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="ยิง QR ที่ป้ายราคา หรือพิมพ์รหัสสินค้า" aria-label="รหัสสินค้า หรือ QR ป้ายราคา" autofocus>
+    <button class="clear" id="clear" type="button" hidden>ล้าง</button>
+  </label>
+  <div class="hint">
+    <span>รหัส 7 หลัก เช่น 8414105 หรือพิมพ์ชื่อสินค้า เช่น hoodie</span>
+    <span class="ready" id="ready"><i></i><span>พร้อมสแกน</span></span>
+  </div>
+  <div class="recent" id="recent" hidden></div>
+
+  <div id="out" aria-live="polite"></div>
+
+  <section class="overview">
+    <h3>สินค้าที่ร่วมรายการ</h3>
+    <p id="ovNote"></p>
+    <div class="groups" id="groups"></div>
+    <div id="groupList"></div>
+  </section>
+
+  <div class="foot">
+    <span id="memo"></span>
+    <button type="button" id="theme">สลับโหมดสี</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ===== ข้อมูลโปรโมชั่น (แก้ไขที่นี่เมื่อมี Memo ใหม่) ===== */
+const CAMPAIGN = {
+  brand: "LCFC (LTC)",
+  start: "2026-10-15",
+  end:   "2026-11-30",
+  memo:  "Memo No.0333/2026",
+  channel: "ทุกสาขา ยกเว้น Online"
+};
+const PROMOS = {
+  1: { title:"โปร 1", name:"Street Jersey", disc:40, min:2, code:"DLCFC40",
+       cond:"ซื้อสินค้ากลุ่ม Street Jersey ครบ 2 ชิ้น (คละแบบได้)" },
+  2: { title:"โปร 2", name:"เสื้อยืด เสื้อเชิ้ต กางเกง", disc:30, min:2, code:"DLCFC30",
+       cond:"ซื้อสินค้ากลุ่มเสื้อยืด เสื้อเชิ้ต กางเกงขาสั้น และกางเกงขายาว ครบ 2 ชิ้น (คละแบบได้)" },
+  3: { title:"โปร 3", name:"กระเป๋า", disc:30, min:1, code:"DLCFC30",
+       cond:"ซื้อสินค้ากลุ่มกระเป๋า 1 ชิ้น" }
+};
+/* [รหัส, รายละเอียด, ราคาปกติ, เลขโปร] */
+const PRODUCTS = [["8376622","LTC SP24 STREET JERSEY V2 WHBK-S",990,1],["8376623","LTC SP24 STREET JERSEY V2 WHBK-M",990,1],["8376624","LTC SP24 STREET JERSEY V2 WHBK-L",990,1],["8376625","LTC SP24 STREET JERSEY V2 WHBK-XL",990,1],["8376631","LTC SP24 STREET JERSEY V1 WHBL-XXL",990,1],["8376632","LTC SP24 STREET JERSEY V3 BKBL-S",990,1],["8376633","LTC SP24 STREET JERSEY V3 BKBL-M",990,1],["8376634","LTC SP24 STREET JERSEY V3 BKBL-L",990,1],["8376635","LTC SP24 STREET JERSEY V3 BKBL-XL",990,1],["8382885","LTC SP24 V2 STREET JERSEY 01 GRBK-S",990,1],["8382886","LTC SP24 V2 STREET JERSEY 01 GRBK-M",990,1],["8382887","LTC SP24 V2 STREET JERSEY 01 GRBK-L",990,1],["8382888","LTC SP24 V2 STREET JERSEY 01 GRBK-XL",990,1],["8382889","LTC SP24 V2 STREET JERSEY 01 GRBK-XXL",990,1],["8382890","LTC SP24 V2 STREET JERSEY 02 BLBR-S",990,1],["8382891","LTC SP24 V2 STREET JERSEY 02 BLBR-M",990,1],["8382892","LTC SP24 V2 STREET JERSEY 02 BLBR-L",990,1],["8382893","LTC SP24 V2 STREET JERSEY 02 BLBR-XL",990,1],["8382894","LTC SP24 V2 STREET JERSEY 02 BLBR-XXL",990,1],["8382895","LTC SP24 V2 STREET JERSEY 03 BKWH-S",990,1],["8382896","LTC SP24 V2 STREET JERSEY 03 BKWH-M",990,1],["8382897","LTC SP24 V2 STREET JERSEY 03 BKWH-L",990,1],["8382898","LTC SP24 V2 STREET JERSEY 03 BKWH-XL",990,1],["8382899","LTC SP24 V2 STREET JERSEY 03 BKWH-XXL",990,1],["8382900","LTC SP24 V2 STREET JERSEY 04 PIGR-S",990,1],["8382901","LTC SP24 V2 STREET JERSEY 04 PIGR-M",990,1],["8382902","LTC SP24 V2 STREET JERSEY 04 PIGR-L",990,1],["8382903","LTC SP24 V2 STREET JERSEY 04 PIGR-XL",990,1],["8382904","LTC SP24 V2 STREET JERSEY 04 PIGR-XXL",990,1],["8388116","LTC SP25 V1 STREET JERSEY 01 NVIV-S",990,1],["8388117","LTC SP25 V1 STREET JERSEY 01 NVIV-M",990,1],["8388118","LTC SP25 V1 STREET JERSEY 01 NVIV-L",990,1],["8388119","LTC SP25 V1 STREET JERSEY 01 NVIV-XL",990,1],["8388120","LTC SP25 V1 STREET JERSEY 01 NVIV-XXL",990,1],["8388121","LTC SP25 V1 STREET JERSEY 02 REPI-S",990,1],["8388122","LTC SP25 V1 STREET JERSEY 02 REPI-M",990,1],["8388123","LTC SP25 V1 STREET JERSEY 02 REPI-L",990,1],["8388124","LTC SP25 V1 STREET JERSEY 02 REPI-XL",990,1],["8388125","LTC SP25 V1 STREET JERSEY 02 REPI-XXL",990,1],["8388126","LTC SP25 V1 STREET JERSEY 03 PIGR-S",990,1],["8388127","LTC SP25 V1 STREET JERSEY 03 PIGR-M",990,1],["8388128","LTC SP25 V1 STREET JERSEY 03 PIGR-L",990,1],["8388129","LTC SP25 V1 STREET JERSEY 03 PIGR-XL",990,1],["8388130","LTC SP25 V1 STREET JERSEY 03 PIGR-XXL",990,1],["8388131","LTC SP25 V1 STREET JERSEY 04 BLGR-S",990,1],["8388132","LTC SP25 V1 STREET JERSEY 04 BLGR-M",990,1],["8388133","LTC SP25 V1 STREET JERSEY 04 BLGR-L",990,1],["8388134","LTC SP25 V1 STREET JERSEY 04 BLGR-XL",990,1],["8388135","LTC SP25 V1 STREET JERSEY 04 BLGR-XXL",990,1],["8388136","LTC SP25 V1 STREET JERSEY 05 BLIV-S",990,1],["8388137","LTC SP25 V1 STREET JERSEY 05 BLIV-M",990,1],["8388138","LTC SP25 V1 STREET JERSEY 05 BLIV-L",990,1],["8388139","LTC SP25 V1 STREET JERSEY 05 BLIV-XL",990,1],["8388140","LTC SP25 V1 STREET JERSEY 05 BLIV-XXL",990,1],["8388141","LTC SP25 V1 STREET JERSEY 06 BLNY-S",990,1],["8388142","LTC SP25 V1 STREET JERSEY 06 BLNY-M",990,1],["8388143","LTC SP25 V1 STREET JERSEY 06 BLNY-L",990,1],["8388144","LTC SP25 V1 STREET JERSEY 06 BLNY-XL",990,1],["8388145","LTC SP25 V1 STREET JERSEY 06 BLNY-XXL",990,1],["8388146","LTC SP25 V1 STREET JERSEY LS 07 BKGR-S",1190,1],["8388147","LTC SP25 V1 STREET JERSEY LS 07 BKGR-M",1190,1],["8388148","LTC SP25 V1 STREET JERSEY LS 07 BKGR-L",1190,1],["8388149","LTC SP25 V1 STREET JERSEY LS 07 BKGR-XL",1190,1],["8388150","LTC SP25 V1 STREET JERSEY LS 07 BKGR-XXL",1190,1],["8388151","LTC SP25 V1 STREET JERSEY LS 08 GYGR-S",1190,1],["8388152","LTC SP25 V1 STREET JERSEY LS 08 GYGR-M",1190,1],["8388153","LTC SP25 V1 STREET JERSEY LS 08 GYGR-L",1190,1],["8388154","LTC SP25 V1 STREET JERSEY LS 08 GYGR-XL",1190,1],["8388155","LTC SP25 V1 STREET JERSEY LS 08 GYGR-XXL",1190,1],["8403037","LTC SP25 V2 STREET JERSEY 09 IVBL-S",990,1],["8403038","LTC SP25 V2 STREET JERSEY 09 IVBL-M",990,1],["8403039","LTC SP25 V2 STREET JERSEY 09 IVBL-L",990,1],["8403040","LTC SP25 V2 STREET JERSEY 09 IVBL-XL",990,1],["8403041","LTC SP25 V2 STREET JERSEY 09 IVBL-XXL",990,1],["8403042","LTC SP25 V2 STREET JERSEY 10 NVGR-S",990,1],["8403043","LTC SP25 V2 STREET JERSEY 10 NVGR-M",990,1],["8403044","LTC SP25 V2 STREET JERSEY 10 NVGR-L",990,1],["8403045","LTC SP25 V2 STREET JERSEY 10 NVGR-XL",990,1],["8403046","LTC SP25 V2 STREET JERSEY 10 NVGR-XXL",990,1],["8403047","LTC SP25 V2 STREET JERSEY 11 BK-S",990,1],["8403048","LTC SP25 V2 STREET JERSEY 11 BK-M",990,1],["8403049","LTC SP25 V2 STREET JERSEY 11 BK-L",990,1],["8403050","LTC SP25 V2 STREET JERSEY 11 BK-XL",990,1],["8403051","LTC SP25 V2 STREET JERSEY 11 BK-XXL",990,1],["8403052","LTC SP25 V2 STREET JERSEY 12 NV-S",990,1],["8403053","LTC SP25 V2 STREET JERSEY 12 NV-M",990,1],["8403054","LTC SP25 V2 STREET JERSEY 12 NV-L",990,1],["8403055","LTC SP25 V2 STREET JERSEY 12 NV-XL",990,1],["8403056","LTC SP25 V2 STREET JERSEY 12 NV-XXL",990,1],["8414080","LTC SP25 V3 STREET JERSEY 13 NVBK-S",990,1],["8414081","LTC SP25 V3 STREET JERSEY 13 NVBK-M",990,1],["8414082","LTC SP25 V3 STREET JERSEY 13 NVBK-L",990,1],["8414083","LTC SP25 V3 STREET JERSEY 13 NVBK-XL",990,1],["8414084","LTC SP25 V3 STREET JERSEY 13 NVBK-XXL",990,1],["8414085","LTC SP25 V3 STREET JERSEY 14 BK-S",990,1],["8414086","LTC SP25 V3 STREET JERSEY 14 BK-M",990,1],["8414087","LTC SP25 V3 STREET JERSEY 14 BK-L",990,1],["8414088","LTC SP25 V3 STREET JERSEY 14 BK-XL",990,1],["8414089","LTC SP25 V3 STREET JERSEY 14 BK-XXL",990,1],["8414090","LTC SP25 V3 STREET JERSEY 15 PIBE-S",990,1],["8414091","LTC SP25 V3 STREET JERSEY 15 PIBE-M",990,1],["8414092","LTC SP25 V3 STREET JERSEY 15 PIBE-L",990,1],["8414093","LTC SP25 V3 STREET JERSEY 15 PIBE-XL",990,1],["8414094","LTC SP25 V3 STREET JERSEY 15 PIBE-XXL",990,1],["8414095","LTC SP25 V3 STREET JERSEY 16 BLGR-S",990,1],["8414096","LTC SP25 V3 STREET JERSEY 16 BLGR-M",990,1],["8414097","LTC SP25 V3 STREET JERSEY 16 BLGR-L",990,1],["8414098","LTC SP25 V3 STREET JERSEY 16 BLGR-XL",990,1],["8414099","LTC SP25 V3 STREET JERSEY 16 BLGR-XXL",990,1],["8424241","LTC SP25 V4 STREET JERSEY 17 GR-S",990,1],["8424242","LTC SP25 V4 STREET JERSEY 17 GR-M",990,1],["8424243","LTC SP25 V4 STREET JERSEY 17 GR-L",990,1],["8424244","LTC SP25 V4 STREET JERSEY 17 GR-XL",990,1],["8424245","LTC SP25 V4 STREET JERSEY 17 GR-XXL",990,1],["8424246","LTC SP25 V4 STREET JERSEY 18 NV-S",990,1],["8424247","LTC SP25 V4 STREET JERSEY 18 NV-M",990,1],["8424248","LTC SP25 V4 STREET JERSEY 18 NV-L",990,1],["8424249","LTC SP25 V4 STREET JERSEY 18 NV-XL",990,1],["8424250","LTC SP25 V4 STREET JERSEY 18 NV-XXL",990,1],["8424251","LTC SP25 V4 STREET JERSEY 19 GRBK-S",1190,1],["8424252","LTC SP25 V4 STREET JERSEY 19 GRBK-M",1190,1],["8424253","LTC SP25 V4 STREET JERSEY 19 GRBK-L",1190,1],["8424254","LTC SP25 V4 STREET JERSEY 19 GRBK-XL",1190,1],["8424255","LTC SP25 V4 STREET JERSEY 19 GRBK-XXL",1190,1],["8424256","LTC SP25 V4 STREET JERSEY 20 BK-S",1190,1],["8424257","LTC SP25 V4 STREET JERSEY 20 BK-M",1190,1],["8424258","LTC SP25 V4 STREET JERSEY 20 BK-L",1190,1],["8424259","LTC SP25 V4 STREET JERSEY 20 BK-XL",1190,1],["8424260","LTC SP25 V4 STREET JERSEY 20 BK-XXL",1190,1],["8414060","LTC FOXES SQUAD JERSEY BK-S",990,1],["8414061","LTC FOXES SQUAD JERSEY BK-M",990,1],["8414062","LTC FOXES SQUAD JERSEY BK-L",990,1],["8414063","LTC FOXES SQUAD JERSEY BK-XL",990,1],["8414064","LTC FOXES SQUAD JERSEY BK-XXL",990,1],["8414065","LTC FOXES SQUAD JERSEY NV-S",990,1],["8414066","LTC FOXES SQUAD JERSEY NV-M",990,1],["8414067","LTC FOXES SQUAD JERSEY NV-L",990,1],["8414068","LTC FOXES SQUAD JERSEY NV-XL",990,1],["8414069","LTC FOXES SQUAD JERSEY NV-XXL",990,1],["8414100","LTC SP25 V3 SHORTS BK-S",1090,1],["8414101","LTC SP25 V3 SHORTS BK-M",1090,1],["8414102","LTC SP25 V3 SHORTS BK-L",1090,1],["8414103","LTC SP25 V3 SHORTS BK-XL",1090,1],["8414104","LTC SP25 V3 SHORTS BK-XXL",1090,1],["8414105","LTC SP25 V3 JACKET 01 BL-S",3499,1],["8414106","LTC SP25 V3 JACKET 01 BL-M",3499,1],["8414107","LTC SP25 V3 JACKET 01 BL-L",3499,1],["8414108","LTC SP25 V3 JACKET 01 BL-XL",3499,1],["8414109","LTC SP25 V3 JACKET 01 BL-XXL",3499,1],["8414110","LTC SP25 V3 JACKET 02 PI-S",3499,1],["8414111","LTC SP25 V3 JACKET 02 PI-M",3499,1],["8414112","LTC SP25 V3 JACKET 02 PI-L",3499,1],["8414113","LTC SP25 V3 JACKET 02 PI-XL",3499,1],["8414114","LTC SP25 V3 JACKET 02 PI-XXL",3499,1],["8381942","LTC RESTWEAR HAWAIIAN SHIRT BL-S",790,2],["8381943","LTC RESTWEAR HAWAIIAN SHIRT BL-M",790,2],["8381944","LTC RESTWEAR HAWAIIAN SHIRT BL-L",790,2],["8381945","LTC RESTWEAR HAWAIIAN SHIRT BL-XL",790,2],["8381946","LTC RESTWEAR HAWAIIAN SHIRT NV-S",790,2],["8381947","LTC RESTWEAR HAWAIIAN SHIRT NV-M",790,2],["8381948","LTC RESTWEAR HAWAIIAN SHIRT NV-L",790,2],["8381949","LTC RESTWEAR HAWAIIAN SHIRT NV-XL",790,2],["8381950","LTC RESTWEAR HAWAIIAN PANTS BL-M",890,2],["8381951","LTC RESTWEAR HAWAIIAN PANTS BL-L",890,2],["8381952","LTC RESTWEAR HAWAIIAN PANTS BL-XL",890,2],["8381953","LTC RESTWEAR HAWAIIAN PANTS NV-M",890,2],["8381954","LTC RESTWEAR HAWAIIAN PANTS NV-L",890,2],["8381955","LTC RESTWEAR HAWAIIAN PANTS NV-XL",890,2],["8381956","LTC RESTWEAR HAWAIIAN SHORTS BL-M",690,2],["8381957","LTC RESTWEAR HAWAIIAN SHORTS BL-L",690,2],["8381958","LTC RESTWEAR HAWAIIAN SHORTS BL-XL",690,2],["8381959","LTC RESTWEAR HAWAIIAN SHORTS NV-M",690,2],["8381960","LTC RESTWEAR HAWAIIAN SHORTS NV-L",690,2],["8381961","LTC RESTWEAR HAWAIIAN SHORTS NV-XL",690,2],["8386168","LTC SIMPLE 24 SWEAT HOODIE BK-S",1990,2],["8386169","LTC SIMPLE 24 SWEAT HOODIE BK-M",1990,2],["8386170","LTC SIMPLE 24 SWEAT HOODIE BK-L",1990,2],["8386171","LTC SIMPLE 24 SWEAT HOODIE BK-XL",1990,2],["8386172","LTC SIMPLE 24 SWEAT HOODIE BK-XXL",1990,2],["8386173","LTC SIMPLE 24 SWEAT HOODIE GR-S",1990,2],["8386174","LTC SIMPLE 24 SWEAT HOODIE GR-M",1990,2],["8386175","LTC SIMPLE 24 SWEAT HOODIE GR-L",1990,2],["8386176","LTC SIMPLE 24 SWEAT HOODIE GR-XL",1990,2],["8386177","LTC SIMPLE 24 SWEAT HOODIE GR-XXL",1990,2],["8386178","LTC SIMPLE 24 OVERSIZE SWEATSHIRT GR-S",1390,2],["8386179","LTC SIMPLE 24 OVERSIZE SWEATSHIRT GR-M",1390,2],["8386180","LTC SIMPLE 24 OVERSIZE SWEATSHIRT GR-L",1390,2],["8386181","LTC SIMPLE 24 OVERSIZE SWEATSHIRT GR-XL",1390,2],["8386182","LTC SIMPLE 24 OVERSIZE SWEATSHIRT GR-XXL",1390,2],["8386183","LTC SIMPLE 24 OVERSIZE SWEATSHIRT GY-S",1390,2],["8386184","LTC SIMPLE 24 OVERSIZE SWEATSHIRT GY-M",1390,2],["8386185","LTC SIMPLE 24 OVERSIZE SWEATSHIRT GY-L",1390,2],["8386186","LTC SIMPLE 24 OVERSIZE SWEATSHIRT GY-XL",1390,2],["8386187","LTC SIMPLE 24 OVERSIZE SWEATSHIRT GY-XXL",1390,2],["8386188","LTC SIMPLE 24 POLO GR-S",1390,2],["8386189","LTC SIMPLE 24 POLO GR-M",1390,2],["8386190","LTC SIMPLE 24 POLO GR-L",1390,2],["8386191","LTC SIMPLE 24 POLO GR-XL",1390,2],["8386192","LTC SIMPLE 24 POLO GR-XXL",1390,2],["8386193","LTC SIMPLE 24 POLO WH-S",1390,2],["8386194","LTC SIMPLE 24 POLO WH-M",1390,2],["8386195","LTC SIMPLE 24 POLO WH-L",1390,2],["8386196","LTC SIMPLE 24 POLO WH-XL",1390,2],["8386197","LTC SIMPLE 24 POLO WH-XXL",1390,2],["8386198","LTC SIMPLE 24 T-SHIRT BK-S",990,2],["8386199","LTC SIMPLE 24 T-SHIRT BK-M",990,2],["8386200","LTC SIMPLE 24 T-SHIRT BK-L",990,2],["8386201","LTC SIMPLE 24 T-SHIRT BK-XL",990,2],["8386202","LTC SIMPLE 24 T-SHIRT BK-XXL",990,2],["8386203","LTC SIMPLE 24 T-SHIRT GR-S",990,2],["8386204","LTC SIMPLE 24 T-SHIRT GR-M",990,2],["8386205","LTC SIMPLE 24 T-SHIRT GR-L",990,2],["8386206","LTC SIMPLE 24 T-SHIRT GR-XL",990,2],["8386207","LTC SIMPLE 24 T-SHIRT GR-XXL",990,2],["8386208","LTC SIMPLE 24 T-SHIRT GY-S",990,2],["8386209","LTC SIMPLE 24 T-SHIRT GY-M",990,2],["8386210","LTC SIMPLE 24 T-SHIRT GY-L",990,2],["8386211","LTC SIMPLE 24 T-SHIRT GY-XL",990,2],["8386212","LTC SIMPLE 24 T-SHIRT GY-XXL",990,2],["8386213","LTC SIMPLE 24 SWEATPANTS GR-S",1490,2],["8386214","LTC SIMPLE 24 SWEATPANTS GR-M",1490,2],["8386215","LTC SIMPLE 24 SWEATPANTS GR-L",1490,2],["8386216","LTC SIMPLE 24 SWEATPANTS GR-XL",1490,2],["8386217","LTC SIMPLE 24 SWEATPANTS GR-XXL",1490,2],["8386218","LTC SIMPLE 24 SWEATPANTS GY-S",1490,2],["8386219","LTC SIMPLE 24 SWEATPANTS GY-M",1490,2],["8386220","LTC SIMPLE 24 SWEATPANTS GY-L",1490,2],["8386221","LTC SIMPLE 24 SWEATPANTS GY-XL",1490,2],["8386222","LTC SIMPLE 24 SWEATPANTS GY-XXL",1490,2],["8386223","LTC SIMPLE 24 SWEATPANTS SHORTS BK-S",1090,2],["8386224","LTC SIMPLE 24 SWEATPANTS SHORTS BK-M",1090,2],["8386225","LTC SIMPLE 24 SWEATPANTS SHORTS BK-L",1090,2],["8386226","LTC SIMPLE 24 SWEATPANTS SHORTS BK-XL",1090,2],["8386227","LTC SIMPLE 24 SWEATPANTS SHORTS BK-XXL",1090,2],["8386228","LTC SIMPLE 24 SWEATPANTS SHORTS GR-S",1090,2],["8386229","LTC SIMPLE 24 SWEATPANTS SHORTS GR-M",1090,2],["8386230","LTC SIMPLE 24 SWEATPANTS SHORTS GR-L",1090,2],["8386231","LTC SIMPLE 24 SWEATPANTS SHORTS GR-XL",1090,2],["8386232","LTC SIMPLE 24 SWEATPANTS SHORTS GR-XXL",1090,2],["8386233","LTC SIMPLE 24 SWEATPANTS SHORTS GY-S",1090,2],["8386234","LTC SIMPLE 24 SWEATPANTS SHORTS GY-M",1090,2],["8386235","LTC SIMPLE 24 SWEATPANTS SHORTS GY-L",1090,2],["8386236","LTC SIMPLE 24 SWEATPANTS SHORTS GY-XL",1090,2],["8386237","LTC SIMPLE 24 SWEATPANTS SHORTS GY-XXL",1090,2],["8404932","LTC RETRO 25 T-SHIRT FOX FACE 01 BK-S",690,2],["8404933","LTC RETRO 25 T-SHIRT FOX FACE 01 BK-M",690,2],["8404934","LTC RETRO 25 T-SHIRT FOX FACE 01 BK-L",690,2],["8404935","LTC RETRO 25 T-SHIRT FOX FACE 01 BK-XL",690,2],["8404936","LTC RETRO 25 T-SHIRT FOX FACE 01 BK-XXL",690,2],["8404937","LTC RETRO 25 T-SHIRT FOX FACE 02 OW-S",690,2],["8404938","LTC RETRO 25 T-SHIRT FOX FACE 02 OW-M",690,2],["8404939","LTC RETRO 25 T-SHIRT FOX FACE 02 OW-L",690,2],["8404940","LTC RETRO 25 T-SHIRT FOX FACE 02 OW-XL",690,2],["8404941","LTC RETRO 25 T-SHIRT FOX FACE 02 OW-XXL",690,2],["8404942","LTC RETRO 25 T-SHIRT 2 FOXFACES 03 BK-S",690,2],["8404943","LTC RETRO 25 T-SHIRT 2 FOXFACES 03 BK-M",690,2],["8404944","LTC RETRO 25 T-SHIRT 2 FOXFACES 03 BK-L",690,2],["8404945","LTC RETRO 25 T-SHIRT 2 FOXFACES 03 BK-XL",690,2],["8404946","LTC RETRO 25 T-SHIRT 2 FOXFACES 03 BK-XXL",690,2],["8404947","LTC RETRO 25 T-SHIRT 2 FOXFACES 04 OW-S",690,2],["8404948","LTC RETRO 25 T-SHIRT 2 FOXFACES 04 OW-M",690,2],["8404949","LTC RETRO 25 T-SHIRT 2 FOXFACES 04 OW-L",690,2],["8404950","LTC RETRO 25 T-SHIRT 2 FOXFACES 04 OW-XL",690,2],["8404951","LTC RETRO 25 T-SHIRT 2 FOXFACES 04 OW-XXL",690,2],["8413398","LTC PRIDE 25 LONG SLEEVE POLO WH-S",890,2],["8413399","LTC PRIDE 25 LONG SLEEVE POLO WH-M",890,2],["8413400","LTC PRIDE 25 LONG SLEEVE POLO WH-L",890,2],["8413401","LTC PRIDE 25 LONG SLEEVE POLO WH-XL",890,2],["8413402","LTC PRIDE 25 LONG SLEEVE POLO WH-XXL",890,2],["8413403","LTC PRIDE 25 LONG SLEEVE POLO NV-S",890,2],["8413404","LTC PRIDE 25 LONG SLEEVE POLO NV-M",890,2],["8413405","LTC PRIDE 25 LONG SLEEVE POLO NV-L",890,2],["8413406","LTC PRIDE 25 LONG SLEEVE POLO NV-XL",890,2],["8413407","LTC PRIDE 25 LONG SLEEVE POLO NV-XXL",890,2],["8414050","LTC FOXES SQUAD JACKET BK-S",2790,2],["8414051","LTC FOXES SQUAD JACKET BK-M",2790,2],["8414052","LTC FOXES SQUAD JACKET BK-L",2790,2],["8414053","LTC FOXES SQUAD JACKET BK-XL",2790,2],["8414054","LTC FOXES SQUAD JACKET BK-XXL",2790,2],["8414055","LTC FOXES SQUAD JACKET NV-S",2790,2],["8414056","LTC FOXES SQUAD JACKET NV-M",2790,2],["8414057","LTC FOXES SQUAD JACKET NV-L",2790,2],["8414058","LTC FOXES SQUAD JACKET NV-XL",2790,2],["8414059","LTC FOXES SQUAD JACKET NV-XXL",2790,2],["8414070","LTC FOXES SQUAD T-SHIRT WH-S",690,2],["8414071","LTC FOXES SQUAD T-SHIRT WH-M",690,2],["8414072","LTC FOXES SQUAD T-SHIRT WH-L",690,2],["8414073","LTC FOXES SQUAD T-SHIRT WH-XL",690,2],["8414074","LTC FOXES SQUAD T-SHIRT WH-XXL",690,2],["8414075","LTC FOXES SQUAD T-SHIRT BK-S",690,2],["8414076","LTC FOXES SQUAD T-SHIRT BK-M",690,2],["8414077","LTC FOXES SQUAD T-SHIRT BK-L",690,2],["8414078","LTC FOXES SQUAD T-SHIRT BK-XL",690,2],["8414079","LTC FOXES SQUAD T-SHIRT BK-XXL",690,2],["8374323","LTC SP24 CROSSBODY BAG LEICESTER CITY",790,3],["8374322","LTC SP24 CROSSBODY BAG FOX LEISURE",790,3],["8358978","LTC SP23 FOLDABLE BACKPACK BAG-BK",990,3],["8382002","LTC RESTWEAR DRAWSTRING BACKPACK BL",1190,3],["8301657","LTC TYVEK SHOPPING BAG",690,3],["8301658","LTC SHOPPING BAG",600,3],["8374325","LTC SP24 TOTE BAG LEICESTER CITY",1190,3],["8380313","LTC CSR24 NAN CROSSBODY TOTE BAG",2090,3],["8374324","LTC SP24 TOTE BAG FOX LEISURE",1190,3],["8382003","LTC RESTWEAR DRAWSTRING BACKPACK NV",1190,3],["8414046","LTC FOXES SQUAD FOLDING BAG-BK",1290,3],["8414047","LTC FOXES SQUAD FOLDING BAG-NV",1290,3]];
+
+/* ===== ตัวช่วย ===== */
+const DB = new Map(PRODUCTS.map(p => [p[0], {code:p[0], desc:p[1], price:p[2], promo:p[3]}]));
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = n => { const v = Math.round(n*100)/100; return v.toLocaleString("en-US",{minimumFractionDigits: v%1 ? 2 : 0, maximumFractionDigits:2}); };
+const net = (price, d) => Math.round(price*(100-d))/100;
+const pcls = p => PROMOS[p].disc >= 40 ? "p40" : "p30";
+const thDate = iso => new Date(iso+"T00:00:00").toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"});
+
+/* คีย์บอร์ดไทย: ถ้าเครื่องสแกนส่งตัวอักษรตอนเปิดภาษาไทยอยู่ ให้แปลงกลับเป็นตัวเลข */
+const THAI_KEY = {"ๅ":"1","/":"2","-":"3","ภ":"4","ถ":"5","ุ":"6","ึ":"7","ค":"8","ต":"9","จ":"0",
+  "๑":"1","๒":"2","๓":"3","๔":"4","๕":"5","๖":"6","๗":"7","๘":"8","๙":"9","๐":"0"};
+function normalize(raw){
+  const s = String(raw).trim();
+  const mapped = s.replace(/[ๅ\/\-ภถุึคตจ๑-๙๐]/g, c => THAI_KEY[c] ?? c);
+  /* ใช้ค่าที่แปลงแล้วเฉพาะเมื่อผลลัพธ์เป็นตัวเลขล้วน (กันชื่อสินค้าที่มีขีด เช่น T-SHIRT) */
+  return /^[\d\s]+$/.test(mapped) ? mapped.replace(/\s/g,"") : s;
+}
+
+/* แยกรหัสสินค้าจาก QR ป้ายราคา เช่น 0000 8414129 2165492608180720000000000307500 */
+function codeFromQR(digits){
+  const primary = digits.replace(/^0+/, "").slice(0, 7);
+  if (DB.has(primary)) return {code:primary, sure:true};
+  for (let i = 0; i + 7 <= digits.length; i++){
+    const sub = digits.slice(i, i+7);
+    if (DB.has(sub)) return {code:sub, sure:false};
+  }
+  return {code:primary, sure:true, missing:true};
+}
+
+function resolve(raw){
+  const t = normalize(raw);
+  if (!t) return {type:"none"};
+  if (/^\d+$/.test(t)){
+    if (t.length === 7) return DB.has(t) ? {type:"item", item:DB.get(t)} : {type:"miss", code:t};
+    if (t.length > 7){
+      const r = codeFromQR(t);
+      if (r.missing) return {type:"miss", code:r.code, qr:true};
+      return {type:"item", item:DB.get(r.code), qr:true, sure:r.sure};
+    }
+    const hits = PRODUCTS.filter(p => p[0].startsWith(t)).map(p => DB.get(p[0]));
+    return {type:"list", items:hits, query:t, kind:"code"};
+  }
+  const words = t.toUpperCase().split(/\s+/).filter(Boolean);
+  const hits = PRODUCTS.filter(p => words.every(w => p[1].toUpperCase().includes(w))).map(p => DB.get(p[0]));
+  return {type:"list", items:hits, query:t, kind:"text"};
+}
+
+/* ===== สถานะโปร ===== */
+function campaignState(){
+  const now = new Date(); const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const s = new Date(CAMPAIGN.start+"T00:00:00"), e = new Date(CAMPAIGN.end+"T00:00:00");
+  const day = 864e5;
+  if (today < s){ const n = Math.round((s-today)/day); return {k:"upcoming", text: n===1 ? `เริ่มพรุ่งนี้ ${thDate(CAMPAIGN.start)}` : `ยังไม่เริ่ม เริ่ม ${thDate(CAMPAIGN.start)} (อีก ${n} วัน)`}; }
+  if (today > e) return {k:"ended", text:`หมดโปรแล้ว เมื่อ ${thDate(CAMPAIGN.end)}`};
+  const left = Math.round((e-today)/day);
+  return {k:"active", text: left===0 ? "ใช้ได้วันนี้วันสุดท้าย" : `ใช้ได้ถึง ${thDate(CAMPAIGN.end)} (เหลือ ${left} วัน)`};
+}
+
+/* ===== แสดงผล ===== */
+const out = $("#out");
+function splitSize(desc){
+  const m = desc.match(/^(.*?)-(S|M|L|XL|XXL)$/);
+  return m ? {name:m[1], size:m[2]} : {name:desc, size:""};
+}
+function renderItem(item, opt = {}){
+  const P = PROMOS[item.promo], cls = pcls(item.promo), st = campaignState();
+  const {name, size} = splitSize(item.desc);
+  const after = net(item.price, P.disc);
+  const exQty = P.min, exFull = item.price*exQty, exNet = after*exQty;
+  const stateAlert = st.k === "upcoming" ? `<div class="alert">โปรยังไม่เริ่ม ใช้ได้ตั้งแต่ ${thDate(CAMPAIGN.start)} ถึง ${thDate(CAMPAIGN.end)}</div>`
+                   : st.k === "ended" ? `<div class="alert bad">โปรนี้หมดแล้วเมื่อ ${thDate(CAMPAIGN.end)} ขายราคาปกติ</div>` : "";
+  const qrAlert = opt.qr && opt.sure === false ? `<div class="alert note">อ่านรหัสจาก QR ได้ ${esc(item.code)} โปรดเทียบกับรหัสบนป้ายราคาอีกครั้ง</div>` : "";
+  out.innerHTML = `
+  <article class="result ${cls} pop">
+    <div class="tag">
+      <div class="disc">${P.disc}<sup>%</sup></div>
+      <div class="lbl">ส่วนลด</div>
+      <div class="min">${P.min > 1 ? `ซื้อครบ ${P.min} ชิ้น` : "ซื้อ 1 ชิ้นก็ลด"}</div>
+    </div>
+    <div class="info">
+      <div class="meta"><span class="code">${esc(item.code)}</span><span class="grp">${P.title} ${esc(P.name)}</span></div>
+      <h2>${esc(name)}${size ? `<span class="size">ไซส์ ${size}</span>` : ""}</h2>
+      ${stateAlert}${qrAlert}
+      <div class="prices">
+        <div class="price"><small>ราคาปกติ</small><s>${money(item.price)}</s></div>
+        <div class="price now"><small>ราคาหลังลด ต่อชิ้น</small><b>${money(after)}</b></div>
+      </div>
+      <p class="cond">${esc(P.cond)}<em>นับรวมได้เฉพาะสินค้าในกลุ่มเดียวกัน ไม่ข้ามกลุ่มโปร และไม่ร่วมกับส่วนลดอื่น</em></p>
+      <div class="pcode"><span>Promo code</span><b>${P.code}</b><button class="copy" type="button" data-copy="${P.code}">คัดลอก</button></div>
+      <p class="ex">ตัวอย่าง ชิ้นนี้ ${exQty} ชิ้น ราคาปกติ ${money(exFull)} บาท จ่ายจริง <b>${money(exNet)} บาท</b> ประหยัด ${money(exFull-exNet)} บาท</p>
+    </div>
+  </article>`;
+}
+function renderMiss(code, qr){
+  out.innerHTML = `
+  <article class="nopromo pop">
+    <div class="xpanel">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" aria-hidden="true">
+        <circle cx="24" cy="24" r="21" stroke-width="3"/>
+        <path class="x" d="M16 16 32 32"/><path class="x x2" d="M32 16 16 32"/>
+      </svg>
+      <b>ไม่ร่วมโปร</b>
+    </div>
+    <div class="info">
+      <div class="meta"><span class="code">${esc(code)}</span>${qr ? `<span class="grp" style="background:var(--surface-2);color:var(--muted)">อ่านจาก QR</span>` : ""}</div>
+      <h2>สินค้านี้ไม่อยู่ในโปร LCFC รอบนี้</h2>
+      <div class="normal">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>
+        <span>ขายราคาตามป้าย ไม่ต้องใช้ Promo code<small>ถ้ามั่นใจว่าสินค้านี้ควรร่วมรายการ ให้เทียบรหัสบนป้ายกับรายการด้านล่าง</small></span>
+      </div>
+      <div class="acts">
+        <button class="btn dark" type="button" data-act="rescan">สแกนชิ้นถัดไป</button>
+        <button class="btn" type="button" data-act="browse">ดูสินค้าที่ร่วมรายการ</button>
+      </div>
+    </div>
+  </article>`;
+}
+function hl(text, q){
+  const words = q.toUpperCase().split(/\s+/).filter(Boolean);
+  let h = esc(text);
+  words.forEach(w => { const re = new RegExp(esc(w).replace(/[.*+?^${}()|[\]\\]/g,"\\$&"), "gi"); h = h.replace(re, m => `<mark>${m}</mark>`); });
+  return h;
+}
+function rowsHTML(items, q){
+  return items.map(it => `<button class="row" type="button" data-code="${it.code}">
+      <span class="c">${q && /^\d+$/.test(q) ? hl(it.code,q) : it.code}</span>
+      <span class="d">${q && !/^\d+$/.test(q) ? hl(it.desc,q) : esc(it.desc)}</span>
+      <span class="r">${money(it.price)}</span>
+      <span class="badge ${PROMOS[it.promo].disc>=40?"b40":""}">${PROMOS[it.promo].disc}%</span>
+    </button>`).join("");
+}
+function renderList(r){
+  if (!r.items.length){
+    out.innerHTML = `<div class="empty pop"><div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div><div><h2>ไม่พบ "${esc(r.query)}" ในรายการโปร</h2><p>${r.kind==="code" ? "ลองพิมพ์รหัสให้ครบ 7 หลัก หรือยิง QR ที่ป้ายราคา" : "ลองใช้คำที่สั้นลง เช่น jersey, polo, bag"}</p></div></div>`;
+    return;
+  }
+  const max = 40, shown = r.items.slice(0, max);
+  out.innerHTML = `<div class="list pop"><header><span>พบ ${r.items.length} รายการ${r.items.length>max?` แสดง ${max} รายการแรก`:""}</span><span>เลือกเพื่อดูรายละเอียด</span></header>${rowsHTML(shown, r.query)}</div>`;
+}
+
+/* ===== ประวัติ ===== */
+const HKEY = "lcfc-promo-history";
+function getHistory(){ try { return JSON.parse(localStorage.getItem(HKEY)) || []; } catch(e){ return []; } }
+function pushHistory(code){
+  const h = [code, ...getHistory().filter(c => c !== code)].slice(0, 8);
+  try { localStorage.setItem(HKEY, JSON.stringify(h)); } catch(e){}
+  renderHistory(h);
+}
+function renderHistory(h = getHistory()){
+  const box = $("#recent");
+  const valid = h.filter(c => DB.has(c));
+  box.hidden = !valid.length;
+  box.innerHTML = valid.length ? `<small>ค้นหาล่าสุด</small>` + valid.map(c => `<button class="chip" type="button" data-code="${c}">${c}</button>`).join("") : "";
+}
+
+/* ===== การค้นหา ===== */
+const q = $("#q"), clearBtn = $("#clear");
+function show(code){ const it = DB.get(code); if (!it) return; renderItem(it); q.value = code; afterFind(code); }
+function afterFind(code){ pushHistory(code); clearBtn.hidden = false; requestAnimationFrame(() => { q.focus(); q.select(); }); }
+
+function run(final){
+  const r = resolve(q.value);
+  clearBtn.hidden = !q.value;
+  if (r.type === "none"){ out.innerHTML = ""; return; }
+  if (r.type === "item"){
+    renderItem(r.item, r);
+    if (r.qr || final){ q.value = r.item.code; }
+    afterFind(r.item.code);
+    return;
+  }
+  if (r.type === "miss"){
+    if (r.qr || final || r.code.length === 7){ renderMiss(r.code, r.qr); if (r.qr) q.value = r.code; requestAnimationFrame(() => q.select()); }
+    return;
+  }
+  /* list: เริ่มแสดงเมื่อพิมพ์รหัสอย่างน้อย 3 หลัก หรือคำค้น 2 ตัวอักษร */
+  if (final || (r.kind === "code" && r.query.length >= 3) || (r.kind === "text" && r.query.length >= 2)){
+    if (final && r.items.length === 1){ show(r.items[0].code); return; }
+    renderList(r);
+  } else out.innerHTML = "";
+}
+
+let timer;
+q.addEventListener("input", () => {
+  clearTimeout(timer);
+  const t = normalize(q.value);
+  /* ข้อมูลยาว (QR) รอให้สแกนเสร็จก่อน เผื่อเครื่องสแกนไม่ส่งปุ่ม Enter */
+  timer = setTimeout(() => run(false), /^\d{8,}$/.test(t) ? 220 : 140);
+});
+q.addEventListener("keydown", e => {
+  if (e.key === "Enter"){ e.preventDefault(); clearTimeout(timer); run(true); }
+  if (e.key === "Escape"){ q.value = ""; run(false); }
+});
+clearBtn.addEventListener("click", () => { q.value = ""; run(false); q.focus(); });
+
+/* พิมพ์หรือสแกนได้ทุกเมื่อ แม้ช่องค้นหาจะไม่ได้โฟกัสอยู่ */
+document.addEventListener("keydown", e => {
+  if (document.activeElement === q || e.ctrlKey || e.metaKey || e.altKey) return;
+  const tag = (document.activeElement && document.activeElement.tagName) || "";
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
+  if (e.key.length === 1 && e.key !== " "){
+    e.preventDefault(); q.focus(); q.value = e.key; q.dispatchEvent(new Event("input"));
+  } else if (e.key === "Enter" && q.value && tag !== "BUTTON" && tag !== "SUMMARY"){
+    e.preventDefault(); q.focus(); run(true);
+  }
+});
+const ready = $("#ready");
+const setReady = () => { const on = document.activeElement === q; ready.classList.toggle("on", on); ready.lastElementChild.textContent = on ? "พร้อมสแกน" : "พร้อมสแกน (กดที่ใดก็ได้แล้วยิงได้เลย)"; };
+q.addEventListener("focus", setReady); q.addEventListener("blur", setReady);
+
+/* คลิกในหน้า */
+document.addEventListener("click", e => {
+  const c = e.target.closest("[data-code]");
+  if (c){ show(c.dataset.code); window.scrollTo({top:0, behavior:"smooth"}); return; }
+  const cp = e.target.closest("[data-copy]");
+  if (cp){ copyText(cp.dataset.copy); return; }
+  const act = e.target.closest("[data-act]");
+  if (act && act.dataset.act === "rescan"){ q.value = ""; out.innerHTML = ""; clearBtn.hidden = true; q.focus(); }
+  if (act && act.dataset.act === "browse"){ document.querySelector(".overview").scrollIntoView({behavior:"smooth"}); q.focus({preventScroll:true}); }
+});
+function copyText(t){
+  const done = () => toast(`คัดลอก ${t} แล้ว`);
+  if (navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(t).then(done, () => fallbackCopy(t, done)); }
+  else fallbackCopy(t, done);
+}
+function fallbackCopy(t, done){
+  const ta = document.createElement("textarea"); ta.value = t; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); done(); } catch(e){} ta.remove(); q.focus();
+}
+let tt; function toast(msg){ const el = $("#toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(tt); tt = setTimeout(() => el.classList.remove("show"), 1600); }
+
+/* ===== ภาพรวมกลุ่ม ===== */
+function renderOverview(){
+  $("#ovNote").textContent = `${thDate(CAMPAIGN.start)} ถึง ${thDate(CAMPAIGN.end)} ${CAMPAIGN.channel} ทั้งหมด ${PRODUCTS.length} รายการ`;
+  $("#groups").innerHTML = Object.entries(PROMOS).map(([k,P]) => {
+    const n = PRODUCTS.filter(p => p[3] == k).length;
+    return `<button class="g ${pcls(k)}" type="button" data-group="${k}" aria-pressed="false"><b>${P.title} ลด ${P.disc}%</b><span>${esc(P.name)}</span><span>${P.min>1?`ซื้อครบ ${P.min} ชิ้น`:"ซื้อ 1 ชิ้น"} ใช้โค้ด ${P.code}</span><span>${n} รายการ</span></button>`;
+  }).join("");
+  $("#groups").addEventListener("click", e => {
+    const b = e.target.closest("[data-group]"); if (!b) return;
+    const on = b.getAttribute("aria-pressed") !== "true";
+    document.querySelectorAll(".g").forEach(x => x.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed", String(on));
+    const items = PRODUCTS.filter(p => p[3] == b.dataset.group).map(p => DB.get(p[0]));
+    $("#groupList").innerHTML = on ? `<div class="list"><header><span>${PROMOS[b.dataset.group].title} ${esc(PROMOS[b.dataset.group].name)} ${items.length} รายการ</span><span>เลือกเพื่อดูรายละเอียด</span></header>${rowsHTML(items)}</div>` : "";
+  });
+  $("#memo").textContent = `อ้างอิง ${CAMPAIGN.memo} แบรนด์ ${CAMPAIGN.brand}`;
+}
+function renderStatus(){
+  const st = campaignState(), el = $("#status");
+  el.className = `status ${st.k}`; el.lastElementChild.textContent = st.text;
+}
+
+/* ===== โหมดสี ===== */
+const TKEY = "lcfc-promo-theme";
+try { const t = localStorage.getItem(TKEY); if (t) document.documentElement.dataset.theme = t; } catch(e){}
+$("#theme").addEventListener("click", () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  const next = cur === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem(TKEY, next); } catch(e){}
+  q.focus();
+});
+
+renderStatus(); renderOverview(); renderHistory(); setReady(); q.focus();
+setInterval(renderStatus, 60*60*1000);
+</script>
+</body>
+</html>
